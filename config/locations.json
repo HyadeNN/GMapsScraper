@@ -5,7 +5,7 @@
       "lat": 41.0082,
       "lng": 28.9784,
       "districts": [
-        {"name": "Kadıköy", "lat": 40.9927, "lng": 29.0277},
+        {"name": "Kadıköy", "lat": 40.978793, "lng": 29.061507},
         {"name": "Beşiktaş", "lat": 41.0430, "lng": 29.0086},
         {"name": "Üsküdar", "lat": 41.0234, "lng": 29.0152},
         {"name": "Şişli", "lat": 41.0604, "lng": 28.9872},
@@ -109,6 +109,19 @@
         {"name": "Melikgazi", "lat": 38.7375, "lng": 35.5646},
         {"name": "Talas", "lat": 38.6869, "lng": 35.5689}
       ]
+    },
+    {
+      "name": "Zonguldak",
+      "lat": 41.4535,
+      "lng": 31.7894,
+      "districts": [
+        {"name": "Merkez", "lat": 41.4535, "lng": 31.7894},
+        {"name": "Ereğli", "lat": 41.2850, "lng": 31.4200},
+        {"name": "Çaycuma", "lat": 41.4261, "lng": 32.0782},
+        {"name": "Devrek", "lat": 41.2192, "lng": 31.9495},
+        {"name": "Alaplı", "lat": 41.1824, "lng": 31.3889}
+      ]
     }
+
   ]
 }

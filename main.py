@@ -26,10 +26,14 @@ def parse_args():
     parser.add_argument('--city', type=str, help='Specific city to scrape')
     parser.add_argument('--district', type=str, help='Specific district to scrape')
     parser.add_argument('--search-term', type=str, help='Specific search term to use')
-    parser.add_argument('--radius', type=int, default=25000,
-                        help='Search radius in meters (max 50000)')
+    parser.add_argument('--radius', type=int, default=2000,
+                        help='Search radius in meters (max 35000)')
     parser.add_argument('--output-dir', type=str, default='data',
                         help='Directory to save output data')
+    parser.add_argument('--skip-city-search', action='store_true',
+                        help='Skip city-level search and only search districts')
+    parser.add_argument('--batch-size', type=int, default=20,
+                        help='Number of places to process before saving a batch')
     return parser.parse_args()
 
 
@@ -52,6 +56,7 @@ def main():
 
     # Initialize scraper, processor and storage
     scraper = GooglePlacesScraper()
+    scraper.batch_size = args.batch_size  # Set custom batch size
     processor = DataProcessor()
     storage = get_storage()
 
@@ -74,38 +79,45 @@ def main():
 
         logger.info(f"Processing city: {city_name}")
 
-        # First, search at city level
-        for search_term in search_terms:
-            logger.info(f"Searching for '{search_term}' in {city_name}")
+        # First, search at city level (if not skipped)
+        if not args.skip_city_search:
+            for search_term in search_terms:
+                logger.info(f"Searching for '{search_term}' in {city_name}")
 
-            try:
-                places = scraper.fetch_places_with_details(
-                    search_term,
-                    (city_data['lat'], city_data['lng']),
-                    radius=args.radius
-                )
-
-                if places:
-                    processed_places = processor.process_places_data(
-                        places, search_term=search_term, city=city_name
+                try:
+                    places = scraper.fetch_places_with_details(
+                        search_term,
+                        (city_data['lat'], city_data['lng']),
+                        radius=args.radius,
+                        storage=storage,
+                        processor=processor,
+                        search_term=search_term,
+                        city=city_name
                     )
 
-                    # Save places for this search
-                    if processed_places:
-                        all_processed_places.extend(processed_places)
+                    if places:
+                        processed_places = processor.process_places_data(
+                            places, search_term=search_term, city=city_name
+                        )
 
-                        # Save incremental results
-                        filename = f"dental_clinics_{city_name.lower().replace(' ', '_')}_{search_term.replace(' ', '_')}_{timestamp}.json"
-                        storage.save(processed_places, filename=filename)
+                        # Save places for this search
+                        if processed_places:
+                            all_processed_places.extend(processed_places)
 
-                        total_places += len(processed_places)
-                        logger.info(f"Found {len(processed_places)} places for '{search_term}' in {city_name}")
+                            # Save final results for this search term
+                            filename = f"dental_clinics_{city_name.lower().replace(' ', '_')}_{search_term.replace(' ', '_')}_{timestamp}.json"
+                            storage.save(processed_places, filename=filename)
 
-            except Exception as e:
-                logger.error(f"Error processing '{search_term}' for {city_name}: {str(e)}")
+                            total_places += len(processed_places)
+                            logger.info(f"Found {len(processed_places)} places for '{search_term}' in {city_name}")
 
-            # Delay between search terms
-            time.sleep(REQUEST_DELAY)
+                except Exception as e:
+                    logger.error(f"Error processing '{search_term}' for {city_name}: {str(e)}")
+
+                # Delay between search terms
+                time.sleep(REQUEST_DELAY)
+        else:
+            logger.info(f"Skipping city-level search for {city_name} as requested")
 
         # Then, search at district level if there are districts
         if 'districts' in city_data and city_data['districts']:
@@ -125,7 +137,12 @@ def main():
                         places = scraper.fetch_places_with_details(
                             f"{search_term} {district_name}",
                             (district['lat'], district['lng']),
-                            radius=min(10000, args.radius)  # Smaller radius for districts
+                            radius=min(10000, args.radius),  # Smaller radius for districts
+                            storage=storage,
+                            processor=processor,
+                            search_term=search_term,
+                            city=city_name,
+                            district=district_name
                         )
 
                         if places:
@@ -137,7 +154,7 @@ def main():
                             if processed_places:
                                 all_processed_places.extend(processed_places)
 
-                                # Save incremental results
+                                # Save final results for this search term and district
                                 filename = f"dental_clinics_{city_name.lower().replace(' ', '_')}_{district_name.lower().replace(' ', '_')}_{search_term.replace(' ', '_')}_{timestamp}.json"
                                 storage.save(processed_places, filename=filename)
 

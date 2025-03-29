@@ -11,8 +11,8 @@ API_KEY = os.getenv('GOOGLE_MAPS_API_KEY')
 LANGUAGE = 'tr'
 REGION = 'tr'
 
-SEARCH_RADIUS = 25000  # meters
-REQUEST_DELAY = 2  # seconds between requests
+SEARCH_RADIUS = 15000  # meters
+REQUEST_DELAY = 1  # seconds between requests
 MAX_RETRIES = 3
 
 STORAGE_TYPE = 'json'  # Options: 'json', 'mongodb'
@@ -21,14 +21,8 @@ MONGODB_DB = os.getenv('MONGODB_DB', 'dental_clinics')
 MONGODB_COLLECTION = os.getenv('MONGODB_COLLECTION', 'places')
 
 SEARCH_TERMS = [
-    'dentist',       # İngilizce terim eklendi
-    'dental clinic'  # İngilizce terim eklendi
-    'diş hekimi',
-    'diş kliniği',
-    'ağız ve diş sağlığı merkezi',
-    'diş polikliniği',
-    'ortodonti',
-    'ADSM',
+
+    "dentist"
 ]
 
 LOG_LEVEL = os.getenv('LOG_LEVEL', 'DEBUG')

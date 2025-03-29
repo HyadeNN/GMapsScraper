@@ -18,6 +18,8 @@ class GooglePlacesScraper:
     def __init__(self, api_key=API_KEY):
         self.api_key = api_key
         self.base_url = "https://maps.googleapis.com/maps/api/place"
+        self.batch_size = 20  # Batch size for saving data
+        self.places_batch = []  # Store places temporarily
 
         if not self.api_key:
             raise ValueError("API key is required. Set it in .env file or pass it to the constructor.")
@@ -91,8 +93,6 @@ class GooglePlacesScraper:
             'radius': radius,
             'language': language,
             'region': region
-            # 'type' parametresi kaldırıldı - Text Search ile uyumlu değil
-            # 'fields' parametresi kaldırıldı - Text Search ile uyumlu değil
         }
 
         logger.info(f"Searching for '{keyword}' near {location_str} with radius {radius}m")
@@ -108,25 +108,42 @@ class GooglePlacesScraper:
             next_page_token = response.get('next_page_token')
 
         # Get additional pages if available
+        page_count = 1
         while next_page_token:
-            logger.info(f"Fetching next page of results for '{keyword}'")
+            logger.info(f"Fetching next page (page {page_count + 1}) of results for '{keyword}'")
 
             # Wait before making the next request (token needs time to become valid)
             time.sleep(REQUEST_DELAY * 2)
 
-            page_params = {'pagetoken': next_page_token, 'language': language}
-            response = retry_function(self._make_request, max_retries=MAX_RETRIES)(url, page_params)
+            page_params = {'pagetoken': next_page_token,
+                           'key': self.api_key}  # Simplified params for pagetoken requests
+            try:
+                page_url = f"{self.base_url}/textsearch/json"
+                page_response = retry_function(self._make_request, max_retries=MAX_RETRIES)(page_url, page_params)
 
-            if response and 'results' in response:
-                all_results.extend(response['results'])
-                next_page_token = response.get('next_page_token')
-            else:
+                if page_response and 'results' in page_response:
+                    new_results = page_response['results']
+                    logger.info(f"Found {len(new_results)} additional results on page {page_count + 1}")
+                    all_results.extend(new_results)
+                    next_page_token = page_response.get('next_page_token')
+                else:
+                    logger.warning(f"No results returned for page {page_count + 1}")
+                    next_page_token = None
+            except Exception as e:
+                logger.error(f"Error fetching page {page_count + 1}: {str(e)}")
                 next_page_token = None
+
+            page_count += 1
+
+            # Avoid infinite loops
+            if page_count >= 3:  # Google typically provides maximum of 3 pages (60 results)
+                logger.info(f"Reached maximum page count ({page_count})")
+                break
 
             # Normal delay between requests
             time.sleep(REQUEST_DELAY)
 
-        logger.info(f"Found {len(all_results)} results for '{keyword}'")
+        logger.info(f"Found total of {len(all_results)} results for '{keyword}' across {page_count} page(s)")
         return all_results
 
     def get_place_details(self, place_id, language=LANGUAGE):
@@ -159,7 +176,8 @@ class GooglePlacesScraper:
 
         return None
 
-    def fetch_places_with_details(self, keyword, location, radius=SEARCH_RADIUS, language=LANGUAGE, region=REGION):
+    def fetch_places_with_details(self, keyword, location, radius=SEARCH_RADIUS, language=LANGUAGE, region=REGION,
+                                  storage=None, processor=None, search_term=None, city=None, district=None):
         """
         Search for places and fetch detailed information for each result.
 
@@ -169,6 +187,11 @@ class GooglePlacesScraper:
             radius (int): Search radius in meters (max 50000)
             language (str): Language for results
             region (str): Region bias
+            storage: Storage instance to save data
+            processor: DataProcessor instance to process data
+            search_term: Original search term
+            city: City name
+            district: District name
 
         Returns:
             list: List of places with detailed information
@@ -178,6 +201,10 @@ class GooglePlacesScraper:
 
         # Then, get details for each place
         detailed_results = []
+        batch_count = 0
+
+        # Reset batch for this search
+        self.places_batch = []
 
         for place in search_results:
             place_id = place.get('place_id')
@@ -189,5 +216,57 @@ class GooglePlacesScraper:
                 if place_details:
                     detailed_results.append(place_details)
 
+                    # Process and add to batch if processor and storage are provided
+                    if processor and storage:
+                        processed_place = processor.extract_place_data(place_details, search_term, city, district)
+                        if processed_place:
+                            self.places_batch.append(processed_place)
+
+                            # Save batch if we've reached batch size
+                            batch_count += 1
+                            if len(self.places_batch) >= self.batch_size:
+                                self._save_batch(storage, search_term, city, district)
+
+        # Save any remaining places in batch
+        if processor and storage and self.places_batch:
+            self._save_batch(storage, search_term, city, district)
+
         logger.info(f"Fetched details for {len(detailed_results)} places for keyword '{keyword}'")
         return detailed_results
+
+    def _save_batch(self, storage, search_term=None, city=None, district=None):
+        """
+        Save current batch of places to storage.
+
+        Args:
+            storage: Storage instance
+            search_term: Search term used
+            city: City name
+            district: District name
+        """
+        if not self.places_batch:
+            return
+
+        timestamp = time.strftime("%Y%m%d_%H%M%S")
+        batch_size = len(self.places_batch)
+
+        # Create filename
+        parts = []
+        if city:
+            parts.append(city.lower().replace(' ', '_'))
+        if district:
+            parts.append(district.lower().replace(' ', '_'))
+        if search_term:
+            parts.append(search_term.replace(' ', '_'))
+        parts.append(timestamp)
+
+        filename = f"dental_clinics_{'_'.join(parts)}_batch_{batch_size}.json"
+
+        # Save data
+        try:
+            storage.save(self.places_batch, filename=filename)
+            logger.info(f"Saved batch of {batch_size} places to storage")
+            # Reset batch after saving
+            self.places_batch = []
+        except Exception as e:
+            logger.error(f"Error saving batch: {str(e)}")
