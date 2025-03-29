@@ -1,0 +1,114 @@
+{
+  "cities": [
+    {
+      "name": "İstanbul",
+      "lat": 41.0082,
+      "lng": 28.9784,
+      "districts": [
+        {"name": "Kadıköy", "lat": 40.9927, "lng": 29.0277},
+        {"name": "Beşiktaş", "lat": 41.0430, "lng": 29.0086},
+        {"name": "Üsküdar", "lat": 41.0234, "lng": 29.0152},
+        {"name": "Şişli", "lat": 41.0604, "lng": 28.9872},
+        {"name": "Fatih", "lat": 41.0186, "lng": 28.9398},
+        {"name": "Beyoğlu", "lat": 41.0367, "lng": 28.9795},
+        {"name": "Bakırköy", "lat": 40.9819, "lng": 28.8772},
+        {"name": "Ataşehir", "lat": 40.9830, "lng": 29.1285},
+        {"name": "Maltepe", "lat": 40.9394, "lng": 29.1516},
+        {"name": "Bahçelievler", "lat": 41.0020, "lng": 28.8487}
+      ]
+    },
+    {
+      "name": "Ankara",
+      "lat": 39.9334,
+      "lng": 32.8597,
+      "districts": [
+        {"name": "Çankaya", "lat": 39.9027, "lng": 32.8612},
+        {"name": "Keçiören", "lat": 39.9791, "lng": 32.8676},
+        {"name": "Yenimahalle", "lat": 39.9681, "lng": 32.7747},
+        {"name": "Mamak", "lat": 39.9228, "lng": 32.9391},
+        {"name": "Etimesgut", "lat": 39.9715, "lng": 32.6788}
+      ]
+    },
+    {
+      "name": "İzmir",
+      "lat": 38.4192,
+      "lng": 27.1287,
+      "districts": [
+        {"name": "Konak", "lat": 38.4189, "lng": 27.1287},
+        {"name": "Karşıyaka", "lat": 38.4626, "lng": 27.1209},
+        {"name": "Bornova", "lat": 38.4702, "lng": 27.2122},
+        {"name": "Bayraklı", "lat": 38.4653, "lng": 27.1584},
+        {"name": "Buca", "lat": 38.3772, "lng": 27.1696}
+      ]
+    },
+    {
+      "name": "Bursa",
+      "lat": 40.1885,
+      "lng": 29.0610,
+      "districts": [
+        {"name": "Osmangazi", "lat": 40.1974, "lng": 29.0610},
+        {"name": "Nilüfer", "lat": 40.2158, "lng": 28.9530},
+        {"name": "Yıldırım", "lat": 40.1986, "lng": 29.1110}
+      ]
+    },
+    {
+      "name": "Antalya",
+      "lat": 36.8969,
+      "lng": 30.7133,
+      "districts": [
+        {"name": "Muratpaşa", "lat": 36.8841, "lng": 30.7056},
+        {"name": "Konyaaltı", "lat": 36.8841, "lng": 30.6363},
+        {"name": "Kepez", "lat": 36.9364, "lng": 30.7292}
+      ]
+    },
+    {
+      "name": "Adana",
+      "lat": 37.0000,
+      "lng": 35.3213,
+      "districts": [
+        {"name": "Seyhan", "lat": 37.0359, "lng": 35.2890},
+        {"name": "Çukurova", "lat": 37.0601, "lng": 35.2433},
+        {"name": "Yüreğir", "lat": 37.0370, "lng": 35.3648}
+      ]
+    },
+    {
+      "name": "Konya",
+      "lat": 37.8747,
+      "lng": 32.4932,
+      "districts": [
+        {"name": "Selçuklu", "lat": 37.9307, "lng": 32.4892},
+        {"name": "Meram", "lat": 37.8533, "lng": 32.4435},
+        {"name": "Karatay", "lat": 37.8803, "lng": 32.5418}
+      ]
+    },
+    {
+      "name": "Gaziantep",
+      "lat": 37.0660,
+      "lng": 37.3781,
+      "districts": [
+        {"name": "Şahinbey", "lat": 37.0438, "lng": 37.3576},
+        {"name": "Şehitkamil", "lat": 37.0940, "lng": 37.3777}
+      ]
+    },
+    {
+      "name": "Mersin",
+      "lat": 36.8121,
+      "lng": 34.6414,
+      "districts": [
+        {"name": "Yenişehir", "lat": 36.7889, "lng": 34.6041},
+        {"name": "Mezitli", "lat": 36.7842, "lng": 34.5183},
+        {"name": "Akdeniz", "lat": 36.8107, "lng": 34.6325}
+      ]
+    },
+    {
+      "name": "Kayseri",
+      "lat": 38.7205,
+      "lng": 35.4826,
+      "districts": [
+        {"name": "Kocasinan", "lat": 38.7547, "lng": 35.4995},
+        {"name": "Melikgazi", "lat": 38.7375, "lng": 35.5646},
+        {"name": "Talas", "lat": 38.6869, "lng": 35.5689}
+      ]
+    }
+  ]
+}
