@@ -13,6 +13,7 @@ sys.path.append(str(Path(__file__).parent))
 from config.settings import SEARCH_TERMS, REQUEST_DELAY, API_KEY
 from utils.logger import logger
 from utils.helpers import load_json_file, create_data_directory
+from utils.grid_search import grid_search_places
 from core.scraper import GooglePlacesScraper
 from core.data_processor import DataProcessor
 from core.storage import get_storage
@@ -26,14 +27,22 @@ def parse_args():
     parser.add_argument('--city', type=str, help='Specific city to scrape')
     parser.add_argument('--district', type=str, help='Specific district to scrape')
     parser.add_argument('--search-term', type=str, help='Specific search term to use')
-    parser.add_argument('--radius', type=int, default=2000,
-                        help='Search radius in meters (max 35000)')
+    parser.add_argument('--radius', type=int, default=25000,
+                        help='Search radius in meters (max 50000)')
     parser.add_argument('--output-dir', type=str, default='data',
                         help='Directory to save output data')
     parser.add_argument('--skip-city-search', action='store_true',
                         help='Skip city-level search and only search districts')
     parser.add_argument('--batch-size', type=int, default=20,
                         help='Number of places to process before saving a batch')
+    parser.add_argument('--use-grid-search', action='store_true',
+                        help='Use grid search method for more comprehensive results')
+    parser.add_argument('--grid-width', type=float, default=5.0,
+                        help='Width of grid search area in km (default: 5.0)')
+    parser.add_argument('--grid-height', type=float, default=5.0,
+                        help='Height of grid search area in km (default: 5.0)')
+    parser.add_argument('--grid-radius', type=int, default=800,
+                        help='Search radius in meters for each grid point (default: 800)')
     return parser.parse_args()
 
 
@@ -85,15 +94,29 @@ def main():
                 logger.info(f"Searching for '{search_term}' in {city_name}")
 
                 try:
-                    places = scraper.fetch_places_with_details(
-                        search_term,
-                        (city_data['lat'], city_data['lng']),
-                        radius=args.radius,
-                        storage=storage,
-                        processor=processor,
-                        search_term=search_term,
-                        city=city_name
-                    )
+                    if args.use_grid_search:
+                        logger.info(f"Using grid search for city {city_name}")
+                        places = grid_search_places(
+                            scraper,
+                            search_term,
+                            (city_data['lat'], city_data['lng']),
+                            area_width_km=args.grid_width,
+                            area_height_km=args.grid_height,
+                            search_radius_meters=args.grid_radius,
+                            storage=storage,
+                            processor=processor,
+                            city=city_name
+                        )
+                    else:
+                        places = scraper.fetch_places_with_details(
+                            search_term,
+                            (city_data['lat'], city_data['lng']),
+                            radius=args.radius,
+                            storage=storage,
+                            processor=processor,
+                            search_term=search_term,
+                            city=city_name
+                        )
 
                     if places:
                         processed_places = processor.process_places_data(
@@ -134,16 +157,31 @@ def main():
                     logger.info(f"Searching for '{search_term}' in {district_name}, {city_name}")
 
                     try:
-                        places = scraper.fetch_places_with_details(
-                            f"{search_term} {district_name}",
-                            (district['lat'], district['lng']),
-                            radius=min(10000, args.radius),  # Smaller radius for districts
-                            storage=storage,
-                            processor=processor,
-                            search_term=search_term,
-                            city=city_name,
-                            district=district_name
-                        )
+                        if args.use_grid_search:
+                            logger.info(f"Using grid search for district {district_name}")
+                            places = grid_search_places(
+                                scraper,
+                                search_term,
+                                (district['lat'], district['lng']),
+                                area_width_km=args.grid_width,
+                                area_height_km=args.grid_height,
+                                search_radius_meters=args.grid_radius,
+                                storage=storage,
+                                processor=processor,
+                                city=city_name,
+                                district=district_name
+                            )
+                        else:
+                            places = scraper.fetch_places_with_details(
+                                f"{search_term} {district_name}",
+                                (district['lat'], district['lng']),
+                                radius=min(10000, args.radius),  # Smaller radius for districts
+                                storage=storage,
+                                processor=processor,
+                                search_term=search_term,
+                                city=city_name,
+                                district=district_name
+                            )
 
                         if places:
                             processed_places = processor.process_places_data(

@@ -1,0 +1,30 @@
+[
+  {
+    "Province": "Adana",
+    "PlateNumber": 1,
+    "Coordinates": "37.0000, 35.3250",
+    "Districts": [
+      {
+        "District": "Aladağ",
+        "Coordinates": "37.5485, 35.3960",
+        "Towns": [
+          {
+            "Town": "Merkez",
+            "ZipCode": "01720",
+            "Neighbourhoods": [
+              "Akpınar mah",
+              "Başpınar mah",
+              "Mansurlu mah",
+              "Sinanpaşa mah"
+            ]
+          },
+          {
+            "Town": "Madenli",
+            "ZipCode": "01722",
+            "Neighbourhoods": [
+              "Akören mah",
+              "Boztahta mah",
+              "Büyüksofulu mah"
+            ]
+          }
+          }
