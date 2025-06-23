@@ -1,0 +1,40 @@
+# FastAPI and related dependencies
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+websockets==12.0
+python-multipart==0.0.6
+
+# CORS for React development
+fastapi-cors==0.0.6
+
+# Pydantic for data validation
+pydantic==2.5.0
+pydantic-settings==2.1.0
+
+# JSON handling
+orjson==3.9.10
+
+# Date/time handling
+python-dateutil==2.8.2
+
+# UUID support
+uuid==1.30
+
+# Environment variables
+python-dotenv==1.0.0
+
+# File system operations
+pathlib2==2.3.7
+
+# Type hints
+typing-extensions==4.8.0
+
+# Async support
+asyncio==3.4.3
+aiofiles==23.2.1
+
+# Existing project dependencies (inherit from main project)
+requests==2.31.0
+tqdm==4.66.1
+pymongo==4.5.0
+pandas==2.0.3
