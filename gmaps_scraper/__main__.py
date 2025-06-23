@@ -22,7 +22,7 @@ from core.storage import get_storage
 def parse_args():
     """Parse command line arguments"""
     parser = argparse.ArgumentParser(description='Scrape dental clinics data from Google Maps')
-    parser.add_argument('--config', type=str, default='config/locations.json',
+    parser.add_argument('--config', type=str, default='gmaps_scraper/config/locationsV2.json',
                         help='Path to locations config file')
     parser.add_argument('--city', type=str, help='Specific city to scrape')
     parser.add_argument('--district', type=str, help='Specific district to scrape')
@@ -79,9 +79,8 @@ def main():
     # Create timestamp for run
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
-    for city_data in locations_data['cities']:
-        city_name = city_data['name']
-
+    # locationsV2.json format: cities is an object, not array
+    for city_name, city_data in locations_data['cities'].items():
         # Skip if specific city is provided but doesn't match
         if args.city and args.city.lower() != city_name.lower():
             continue
@@ -144,9 +143,8 @@ def main():
 
         # Then, search at district level if there are districts
         if 'districts' in city_data and city_data['districts']:
-            for district in city_data['districts']:
-                district_name = district['name']
-
+            # locationsV2.json format: districts is an object, not array
+            for district_name, district_data in city_data['districts'].items():
                 # Skip if specific district is provided but doesn't match
                 if args.district and args.district.lower() != district_name.lower():
                     continue
@@ -162,7 +160,7 @@ def main():
                             places = grid_search_places(
                                 scraper,
                                 search_term,
-                                (district['lat'], district['lng']),
+                                (district_data['lat'], district_data['lng']),
                                 area_width_km=args.grid_width,
                                 area_height_km=args.grid_height,
                                 search_radius_meters=args.grid_radius,
@@ -174,7 +172,7 @@ def main():
                         else:
                             places = scraper.fetch_places_with_details(
                                 f"{search_term} {district_name}",
-                                (district['lat'], district['lng']),
+                                (district_data['lat'], district_data['lng']),
                                 radius=min(10000, args.radius),  # Smaller radius for districts
                                 storage=storage,
                                 processor=processor,

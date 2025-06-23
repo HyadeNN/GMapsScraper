@@ -21,7 +21,7 @@ from core.storage import get_storage
 def parse_args():
     """Parse command line arguments"""
     parser = argparse.ArgumentParser(description='Grid search for dental clinics')
-    parser.add_argument('--config', type=str, default='config/locations.json',
+    parser.add_argument('--config', type=str, default='gmaps_scraper/config/locations.json',
                         help='Path to locations config file')
     parser.add_argument('--city', type=str, default='İstanbul',
                         help='City to search (default: İstanbul)')

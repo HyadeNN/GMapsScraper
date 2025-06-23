@@ -132,6 +132,7 @@ celerybeat.pid
 .idea
 .env
 .venv
+.claude
 env/
 venv/
 ENV/
@@ -175,5 +176,4 @@ cython_debug/
 # PyPI configuration file
 .pypirc
 
-turkey-geo.json
 data/

@@ -8,8 +8,8 @@ import sys
 # Add project root to Python path to access project modules
 sys.path.append(str(Path(__file__).parent))
 
-from utils.logger import logger
-from utils.helpers import create_data_directory
+from gmaps_scraper.utils.logger import logger
+from gmaps_scraper.utils.helpers import create_data_directory
 
 
 def flatten_json(nested_json, prefix=''):

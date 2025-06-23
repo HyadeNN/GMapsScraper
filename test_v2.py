@@ -9,18 +9,18 @@ from datetime import datetime
 # Add project root to Python path
 sys.path.append(str(Path(__file__).parent))
 
-from config.settings import SEARCH_TERMS, REQUEST_DELAY, API_KEY
-from utils.logger import logger
-from utils.helpers import load_json_file, create_data_directory
-from core.scraper import GooglePlacesScraper
-from core.data_processor import DataProcessor
-from core.storage import get_storage
+from gmaps_scraper.config.settings import SEARCH_TERMS, REQUEST_DELAY, API_KEY
+from gmaps_scraper.utils.logger import logger
+from gmaps_scraper.utils.helpers import load_json_file, create_data_directory
+from gmaps_scraper.core.scraper import GooglePlacesScraper
+from gmaps_scraper.core.data_processor import DataProcessor
+from gmaps_scraper.core.storage import get_storage
 
 
 def parse_args():
     """Parse command line arguments"""
     parser = argparse.ArgumentParser(description='Test scraper for a single district')
-    parser.add_argument('--config', type=str, default='config/locations.json',
+    parser.add_argument('--config', type=str, default='gmaps_scraper/config/locations.json',
                         help='Path to locations config file')
     parser.add_argument('--city', type=str, default='İstanbul',
                         help='City to test (default: İstanbul)')

@@ -3,7 +3,12 @@ import time
 import os
 from pathlib import Path
 from datetime import datetime
-from config.settings import DATA_DIR
+
+# Handle both direct execution and package imports
+try:
+    from ..config.settings import DATA_DIR
+except ImportError:
+    from config.settings import DATA_DIR
 
 
 def load_json_file(file_path):

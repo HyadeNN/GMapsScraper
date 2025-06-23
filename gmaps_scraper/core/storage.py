@@ -3,14 +3,26 @@ import os
 from datetime import datetime
 from pathlib import Path
 from pymongo import MongoClient
-from utils.logger import logger
-from config.settings import (
-    STORAGE_TYPE,
-    MONGODB_URI,
-    MONGODB_DB,
-    MONGODB_COLLECTION,
-    DATA_DIR
-)
+
+# Handle both direct execution and package imports
+try:
+    from ..utils.logger import logger
+    from ..config.settings import (
+        STORAGE_TYPE,
+        MONGODB_URI,
+        MONGODB_DB,
+        MONGODB_COLLECTION,
+        DATA_DIR
+    )
+except ImportError:
+    from utils.logger import logger
+    from config.settings import (
+        STORAGE_TYPE,
+        MONGODB_URI,
+        MONGODB_DB,
+        MONGODB_COLLECTION,
+        DATA_DIR
+    )
 
 
 class BaseStorage:

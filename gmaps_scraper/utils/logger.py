@@ -3,7 +3,12 @@ import logging
 import sys
 import io
 import os
-from config.settings import LOG_LEVEL, LOG_FILE
+
+# Handle both direct and package imports
+try:
+    from ..config.settings import LOG_LEVEL, LOG_FILE
+except ImportError:
+    from config.settings import LOG_LEVEL, LOG_FILE
 
 
 def setup_logger():

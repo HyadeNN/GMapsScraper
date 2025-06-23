@@ -1,7 +1,12 @@
 import math
 import itertools
-from utils.logger import logger
 from typing import Tuple, List, Dict
+
+# Handle both direct execution and package imports
+try:
+    from ..utils.logger import logger
+except ImportError:
+    from utils.logger import logger
 
 
 def haversine_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> float:

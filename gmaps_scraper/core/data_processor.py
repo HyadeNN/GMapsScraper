@@ -1,5 +1,10 @@
 from datetime import datetime
-from utils.logger import logger
+
+# Handle both direct execution and package imports
+try:
+    from ..utils.logger import logger
+except ImportError:
+    from utils.logger import logger
 
 
 class DataProcessor:
@@ -40,8 +45,8 @@ class DataProcessor:
             'details': {
                 'rating': place_data.get('rating'),
                 'user_ratings_total': place_data.get('user_ratings_total'),
-                'price_level': place_data.get('price_level'),
-                'opening_hours': self._format_opening_hours(place_data.get('opening_hours', {}))
+                'price_level': place_data.get('price_level')
+                # opening_hours removed - Enterprise level field
             },
             'metadata': {
                 'retrieved_at': datetime.now().isoformat(),
@@ -93,43 +98,6 @@ class DataProcessor:
             return postal_code_match.group(0)
         return ''
 
-    def _format_opening_hours(self, opening_hours):
-        """
-        Format opening hours into a structured format.
-        """
-        if not opening_hours or 'periods' not in opening_hours:
-            return {}
-
-        days_map = {
-            0: 'sunday',
-            1: 'monday',
-            2: 'tuesday',
-            3: 'wednesday',
-            4: 'thursday',
-            5: 'friday',
-            6: 'saturday'
-        }
-
-        formatted_hours = {}
-
-        for period in opening_hours.get('periods', []):
-            day = days_map.get(period.get('open', {}).get('day'))
-            if not day:
-                continue
-
-            open_time = period.get('open', {}).get('time', '')
-            close_time = period.get('close', {}).get('time', '')
-
-            if open_time and close_time:
-                open_time = f"{open_time[:2]}:{open_time[2:]}"
-                close_time = f"{close_time[:2]}:{close_time[2:]}"
-
-                if day not in formatted_hours:
-                    formatted_hours[day] = []
-
-                formatted_hours[day].append(f"{open_time}-{close_time}")
-
-        return formatted_hours
 
     def process_places_data(self, places, search_term=None, city=None, district=None):
         """
