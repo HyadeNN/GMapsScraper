@@ -1,9 +1,22 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import debounce from 'lodash.debounce';
 
 const useWebSocket = (url = 'ws://localhost:8000/api/ws/connect') => {
   const [connectionStatus, setConnectionStatus] = useState('disconnected');
   const [logs, setLogs] = useState([]);
   const [lastMessage, setLastMessage] = useState(null);
+  
+  // Debounced log update to prevent excessive re-renders
+  const debouncedLogUpdate = useMemo(
+    () => debounce((logData) => {
+      setLogs(prevLogs => {
+        const newLogs = [...prevLogs, logData];
+        // Keep only last 100 logs to prevent memory issues
+        return newLogs.slice(-100);
+      });
+    }, 100),
+    []
+  );
   const ws = useRef(null);
   const reconnectTimeoutRef = useRef(null);
   const reconnectAttempts = useRef(0);
@@ -35,11 +48,7 @@ const useWebSocket = (url = 'ws://localhost:8000/api/ws/connect') => {
               break;
               
             case 'log_message':
-              setLogs(prevLogs => {
-                const newLogs = [...prevLogs, message.data];
-                // Keep only last 100 log entries
-                return newLogs.slice(-100);
-              });
+              debouncedLogUpdate(message.data);
               break;
               
             case 'progress_update':

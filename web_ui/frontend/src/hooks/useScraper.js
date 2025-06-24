@@ -269,7 +269,7 @@ const useScraper = () => {
     if (!isConnected && progress.status === 'running') {
       const interval = setInterval(() => {
         loadStatus();
-      }, 5000); // Refresh every 5 seconds
+      }, 10000); // Refresh every 10 seconds
       
       return () => clearInterval(interval);
     }

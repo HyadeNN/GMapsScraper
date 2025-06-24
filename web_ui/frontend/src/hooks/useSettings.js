@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { settingsService } from '../services/settingsService';
 
 const useSettings = () => {
@@ -19,13 +19,12 @@ const useSettings = () => {
     mongodb_uri: null,
     mongodb_db: 'dental_clinics',
     mongodb_collection: 'places',
-    auto_save_interval: 2,
     log_level: 'INFO'
   });
   
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [autoSaveTimeout, setAutoSaveTimeout] = useState(null);
+  const savingRef = useRef(false);
 
   // Load settings on mount
   useEffect(() => {
@@ -48,6 +47,13 @@ const useSettings = () => {
   }, []);
 
   const saveSettings = useCallback(async (newSettings) => {
+    // Prevent concurrent save operations
+    if (savingRef.current) {
+      console.log('Save already in progress, skipping...');
+      return settings;
+    }
+    
+    savingRef.current = true;
     setLoading(true);
     setError(null);
     
@@ -60,32 +66,20 @@ const useSettings = () => {
       setError('Failed to save settings');
       throw err;
     } finally {
+      savingRef.current = false;
       setLoading(false);
     }
-  }, []);
+  }, [settings]);
 
-  const updateSettings = useCallback(async (updates, autoSave = true) => {
-    const newSettings = { ...settings, ...updates };
-    setSettings(newSettings);
-    
-    if (autoSave) {
-      // Clear existing timeout
-      if (autoSaveTimeout) {
-        clearTimeout(autoSaveTimeout);
-      }
-      
-      // Set new timeout for auto-save
-      const timeout = setTimeout(async () => {
-        try {
-          await saveSettings(newSettings);
-        } catch (err) {
-          console.error('Auto-save failed:', err);
-        }
-      }, (settings.auto_save_interval || 2) * 1000);
-      
-      setAutoSaveTimeout(timeout);
+  const updateSettings = useCallback(async (updates) => {
+    // If this is a complete settings object (manual save), save to backend
+    if (Object.keys(updates).length > 5) {
+      return await saveSettings(updates);
     }
-  }, [settings, saveSettings, autoSaveTimeout]);
+    
+    // Otherwise just update local state (no auto-save)
+    setSettings(prevSettings => ({ ...prevSettings, ...updates }));
+  }, [saveSettings]);
 
   const updatePartialSettings = useCallback(async (updates) => {
     setLoading(true);
@@ -181,14 +175,6 @@ const useSettings = () => {
     }
   }, []);
 
-  // Cleanup auto-save timeout on unmount
-  useEffect(() => {
-    return () => {
-      if (autoSaveTimeout) {
-        clearTimeout(autoSaveTimeout);
-      }
-    };
-  }, [autoSaveTimeout]);
 
   return {
     settings,

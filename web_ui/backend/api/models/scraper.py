@@ -32,7 +32,6 @@ class ScraperSettings(BaseModel):
     mongodb_collection: str = "places"
     
     # UI specific settings
-    auto_save_interval: int = Field(default=2, ge=1, le=10)  # seconds
     log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "INFO"
 
 

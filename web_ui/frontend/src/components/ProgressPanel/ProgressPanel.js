@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, memo, useMemo } from 'react';
 import {
   Box,
   Typography,
@@ -29,7 +29,7 @@ import {
   CheckCircleOutline
 } from '@mui/icons-material';
 
-const LogMessage = ({ log }) => {
+const LogMessage = memo(({ log }) => {
   const getLogIcon = (level) => {
     switch (level.toLowerCase()) {
       case 'success': return <CheckCircleOutline sx={{ color: 'success.main' }} />;
@@ -78,9 +78,11 @@ const LogMessage = ({ log }) => {
       />
     </ListItem>
   );
-};
+});
 
-const ProgressPanel = ({ progress, logs, scraperStatus }) => {
+LogMessage.displayName = 'LogMessage';
+
+const ProgressPanel = memo(({ progress, logs, scraperStatus }) => {
   const [autoScroll, setAutoScroll] = useState(true);
   const logListRef = useRef(null);
   const [filteredLogs, setFilteredLogs] = useState(logs || []);
@@ -301,6 +303,8 @@ const ProgressPanel = ({ progress, logs, scraperStatus }) => {
       </Box>
     </Box>
   );
-};
+});
+
+ProgressPanel.displayName = 'ProgressPanel';
 
 export default ProgressPanel;

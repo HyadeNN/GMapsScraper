@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, memo } from 'react';
 import {
   Box,
   TextField,
@@ -26,20 +26,28 @@ import {
   RestoreFromTrash
 } from '@mui/icons-material';
 
-const ConfigPanel = ({ settings, onSettingsChange, loading, disabled }) => {
+const ConfigPanel = memo(({ settings, onSettingsChange, loading, disabled }) => {
   const [apiKeyVisible, setApiKeyVisible] = useState(false);
   const [validationResult, setValidationResult] = useState(null);
   const [localSettings, setLocalSettings] = useState(settings);
 
+  // Sync with parent settings only when they change from outside
   useEffect(() => {
     setLocalSettings(settings);
   }, [settings]);
 
-  const handleChange = (field, value) => {
-    const newSettings = { ...localSettings, [field]: value };
-    setLocalSettings(newSettings);
-    onSettingsChange(newSettings);
-  };
+  const handleChange = useCallback((field, value) => {
+    setLocalSettings(prev => ({ ...prev, [field]: value }));
+  }, []);
+
+  // Manual save function - NO auto-save
+  const handleManualSave = useCallback(async () => {
+    try {
+      await onSettingsChange(localSettings);
+    } catch (error) {
+      console.error('Failed to save settings:', error);
+    }
+  }, [localSettings, onSettingsChange]);
 
   const handleSearchTermsChange = (value) => {
     const terms = value.split(',').map(term => term.trim()).filter(term => term);
@@ -56,7 +64,7 @@ const ConfigPanel = ({ settings, onSettingsChange, loading, disabled }) => {
     }
   };
 
-  const resetToDefaults = () => {
+  const resetToDefaults = useCallback(() => {
     const defaults = {
       api_key: '',
       search_terms: ['diş kliniği', 'dentist'],
@@ -74,13 +82,12 @@ const ConfigPanel = ({ settings, onSettingsChange, loading, disabled }) => {
       mongodb_uri: null,
       mongodb_db: 'dental_clinics',
       mongodb_collection: 'places',
-      auto_save_interval: 2,
       log_level: 'INFO'
     };
     
     setLocalSettings(defaults);
-    onSettingsChange(defaults);
-  };
+    // Don't auto-save, let user manually save
+  }, []);
 
   return (
     <Box sx={{ maxWidth: 800 }}>
@@ -384,6 +391,7 @@ const ConfigPanel = ({ settings, onSettingsChange, loading, disabled }) => {
         <Button
           variant="contained"
           startIcon={<Save />}
+          onClick={handleManualSave}
           disabled={disabled || loading}
         >
           {loading ? 'Saving...' : 'Save Configuration'}
@@ -391,6 +399,8 @@ const ConfigPanel = ({ settings, onSettingsChange, loading, disabled }) => {
       </Box>
     </Box>
   );
-};
+});
+
+ConfigPanel.displayName = 'ConfigPanel';
 
 export default ConfigPanel;

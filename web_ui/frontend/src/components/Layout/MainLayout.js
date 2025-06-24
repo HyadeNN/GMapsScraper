@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, memo, useCallback } from 'react';
 import {
   Box,
   AppBar,
@@ -17,7 +17,7 @@ import {
   Settings,
   Assessment
 } from '@mui/icons-material';
-import LocationTree from '../LocationTree/LocationTree';
+import LocationTree from '../LocationTree/LocationTreeOptimized';
 import ConfigPanel from '../ConfigPanel/ConfigPanel';
 import ProgressPanel from '../ProgressPanel/ProgressPanel';
 import ProfileManager from '../ProfileManager/ProfileManager';
@@ -26,7 +26,7 @@ import useSettings from '../../hooks/useSettings';
 import useLocations from '../../hooks/useLocations';
 import useScraper from '../../hooks/useScraper';
 
-const MainLayout = () => {
+const MainLayout = memo(() => {
   const [selectedProfile, setSelectedProfile] = useState(null);
   
   // Custom hooks for state management
@@ -159,43 +159,49 @@ const MainLayout = () => {
 
       {/* Main Content - 3 Panel Layout */}
       <Box sx={{ flex: 1, overflow: 'hidden' }}>
-        <Box sx={{ display: 'flex', height: '100%' }}>
+        <Box sx={{ display: 'flex', height: '100%', overflow: 'hidden' }}>
           {/* Left Panel - Location Tree */}
-          <Box sx={{ width: '25%', borderRight: 1, borderColor: 'divider' }}>
-            <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+          <Box sx={{ width: '25%', borderRight: 1, borderColor: 'divider', overflow: 'hidden' }}>
+            <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
               {/* Profile Manager */}
-              <Paper sx={{ m: 1, p: 2 }} elevation={1}>
-                <Typography variant="h6" gutterBottom>
-                  Profiles
-                </Typography>
-                <ProfileManager
-                  selectedProfile={selectedProfile}
-                  onProfileSelect={setSelectedProfile}
-                />
-              </Paper>
+              <Box sx={{ flexShrink: 0, maxHeight: '30%', overflow: 'hidden' }}>
+                <Paper sx={{ m: 1, p: 2, height: '100%', display: 'flex', flexDirection: 'column' }} elevation={1}>
+                  <Typography variant="h6" gutterBottom sx={{ flexShrink: 0 }}>
+                    Profiles
+                  </Typography>
+                  <Box sx={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
+                    <ProfileManager
+                      selectedProfile={selectedProfile}
+                      onProfileSelect={setSelectedProfile}
+                    />
+                  </Box>
+                </Paper>
+              </Box>
               
               <Divider />
               
               {/* Location Tree */}
-              <Box sx={{ flex: 1, overflow: 'hidden', m: 1 }}>
-                <Paper sx={{ height: '100%', p: 2 }} elevation={1}>
-                  <Typography variant="h6" gutterBottom>
+              <Box sx={{ flex: 1, overflow: 'hidden', m: 1, minHeight: 0 }}>
+                <Paper sx={{ height: '100%', p: 2, display: 'flex', flexDirection: 'column' }} elevation={1}>
+                  <Typography variant="h6" gutterBottom sx={{ flexShrink: 0 }}>
                     Location Selection
                   </Typography>
-                  <LocationTree
-                    locations={locations}
-                    selection={locationSelection}
-                    onSelectionChange={updateLocationSelection}
-                    disabled={progress?.status === 'running'}
-                  />
+                  <Box sx={{ flex: 1, overflow: 'hidden', minHeight: 0 }}>
+                    <LocationTree
+                      locations={locations}
+                      selection={locationSelection}
+                      onSelectionChange={updateLocationSelection}
+                      disabled={progress?.status === 'running'}
+                    />
+                  </Box>
                 </Paper>
               </Box>
             </Box>
           </Box>
 
           {/* Center Panel - Settings */}
-          <Box sx={{ flex: 1 }}>
-            <Box sx={{ height: '100%', overflow: 'auto', m: 1 }}>
+          <Box sx={{ flex: 1, overflow: 'hidden' }}>
+            <Box sx={{ height: '100%', overflow: 'auto', p: 2 }}>
               <Paper sx={{ p: 3, mb: 2 }} elevation={1}>
                 <Typography variant="h5" gutterBottom>
                   <Settings sx={{ mr: 1, verticalAlign: 'middle' }} />
@@ -231,6 +237,8 @@ const MainLayout = () => {
       </Box>
     </Box>
   );
-};
+});
+
+MainLayout.displayName = 'MainLayout';
 
 export default MainLayout;

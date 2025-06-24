@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, memo, useCallback } from 'react';
 import {
   Box,
   FormControl,
@@ -35,7 +35,7 @@ import {
 } from '@mui/icons-material';
 import { profileService } from '../../services/profileService';
 
-const ProfileManager = ({ selectedProfile, onProfileSelect }) => {
+const ProfileManager = memo(({ selectedProfile, onProfileSelect }) => {
   const [profiles, setProfiles] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -100,7 +100,7 @@ const ProfileManager = ({ selectedProfile, onProfileSelect }) => {
     setDialogProfile({
       name: `Profile ${new Date().toLocaleDateString()}`,
       description: 'Saved from current configuration',
-      tags: ['auto-saved']
+      tags: ['default']
     });
     setDialogOpen(true);
   };
@@ -132,8 +132,7 @@ const ProfileManager = ({ selectedProfile, onProfileSelect }) => {
             mongodb_uri: null,
             mongodb_db: 'dental_clinics',
             mongodb_collection: 'places',
-            auto_save_interval: 2,
-            log_level: 'INFO'
+                log_level: 'INFO'
           },
           locations: {
             cities: {},
@@ -470,6 +469,8 @@ const ProfileManager = ({ selectedProfile, onProfileSelect }) => {
       </Dialog>
     </Box>
   );
-};
+});
+
+ProfileManager.displayName = 'ProfileManager';
 
 export default ProfileManager;

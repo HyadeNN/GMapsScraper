@@ -103,11 +103,12 @@ get_scraper_integration = None
 
 async def setup_scraper_callbacks(integration: ScraperIntegration):
     """Set up callbacks for scraper events."""
-    # Add progress callback
-    integration.add_progress_callback(manager.broadcast_progress)
+    # Only add callbacks if they haven't been added yet
+    if manager.broadcast_progress not in integration.progress_callbacks:
+        integration.add_progress_callback(manager.broadcast_progress)
     
-    # Add log callback  
-    integration.add_log_callback(manager.broadcast_log)
+    if manager.broadcast_log not in integration.log_callbacks:
+        integration.add_log_callback(manager.broadcast_log)
 
 
 @router.websocket("/connect")

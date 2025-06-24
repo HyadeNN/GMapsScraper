@@ -86,7 +86,6 @@ async def get_settings():
             mongodb_uri=ui_settings.get('mongodb_uri'),
             mongodb_db=ui_settings.get('mongodb_db', 'dental_clinics'),
             mongodb_collection=ui_settings.get('mongodb_collection', 'places'),
-            auto_save_interval=ui_settings.get('auto_save_interval', 2),
             log_level=ui_settings.get('log_level', 'INFO')
         )
         
@@ -205,7 +204,6 @@ async def get_default_settings():
             mongodb_uri=None,
             mongodb_db="dental_clinics",
             mongodb_collection="places",
-            auto_save_interval=2,
             log_level="INFO"
         )
         

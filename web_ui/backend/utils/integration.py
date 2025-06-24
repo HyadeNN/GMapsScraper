@@ -147,6 +147,14 @@ class ScraperIntegration:
             return False
         
         try:
+            total_locations = self._count_selected_locations(locations)
+            await self._log(LogLevel.INFO, f"DEBUG: Found {total_locations} selected locations")
+            await self._log(LogLevel.INFO, f"DEBUG: Locations data: {list(locations.get('cities', {}).keys())}")
+            
+            if total_locations == 0:
+                await self._log(LogLevel.WARNING, "No locations selected for scraping")
+                return False
+            
             self.current_operation_id = operation_id
             self.should_stop = False
             self.is_paused = False
@@ -156,7 +164,7 @@ class ScraperIntegration:
             self.current_progress = CurrentProgress(
                 status=ProgressStatus.RUNNING,
                 start_time=datetime.now(),
-                total_locations=self._count_selected_locations(locations)
+                total_locations=total_locations
             )
             
             await self._log(LogLevel.INFO, f"Starting scraping operation: {operation_id}")
@@ -198,7 +206,8 @@ class ScraperIntegration:
                 if self.should_stop:
                     break
                     
-                if not city_config.get('selected', False):
+                # Check if city is selected (has search_method or districts)
+                if not city_config.get('search_method') and not city_config.get('districts'):
                     continue
                 
                 # Wait if paused
@@ -245,17 +254,19 @@ class ScraperIntegration:
         city_data = self.locations_data['cities'].get(city_name, {})
         city_coords = (city_data.get('lat'), city_data.get('lng'))
         
-        # City-level search if enabled
-        if city_config.get('city_level_search', False):
-            search_method = city_config.get('search_method', 'standard')
-            await self._log(LogLevel.INFO, f"Searching city level: {city_name} ({search_method})")
+        # City-level search if city has search_method but no districts selected
+        city_search_method = city_config.get('search_method')
+        has_selected_districts = any(d.get('search_method') for d in city_config.get('districts', {}).values())
+        
+        if city_search_method and not has_selected_districts:
+            await self._log(LogLevel.INFO, f"Searching city level: {city_name} ({city_search_method})")
             
             for term in search_terms:
                 if self.should_stop:
                     break
                     
                 await self._perform_search(
-                    term, city_coords, city_name, None, search_method, settings
+                    term, city_coords, city_name, None, city_search_method, settings
                 )
         
         # District-level searches
@@ -263,7 +274,7 @@ class ScraperIntegration:
             if self.should_stop:
                 break
                 
-            if not district_config.get('selected', False):
+            if not district_config.get('search_method'):
                 continue
             
             # Wait if paused
@@ -401,12 +412,13 @@ class ScraperIntegration:
         """Count total selected locations for progress tracking."""
         count = 0
         for city_config in locations.get('cities', {}).values():
-            if city_config.get('selected', False):
-                count += 1  # City level
+            # Count city if it has search_method
+            if city_config.get('search_method'):
+                count += 1
                 
             # Count selected districts
             for district_config in city_config.get('districts', {}).values():
-                if district_config.get('selected', False):
+                if district_config.get('search_method'):
                     count += 1
         
         return count
