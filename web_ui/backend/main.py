@@ -13,7 +13,9 @@ from contextlib import asynccontextmanager
 import uvicorn
 
 # Add the parent directory to Python path to import gmaps_scraper
-sys.path.append(str(Path(__file__).parent.parent.parent))
+backend_dir = Path(__file__).parent
+sys.path.append(str(backend_dir))
+sys.path.append(str(backend_dir.parent.parent))
 
 from api.routes import locations, scraper, profiles, settings, websocket
 from utils.integration import ScraperIntegration

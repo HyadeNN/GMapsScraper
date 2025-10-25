@@ -1,26 +1,50 @@
-import tkinter as tk
-from tkinter import filedialog, ttk, scrolledtext
-import threading
 import os
+import sys
+
+# Fix XCB threading issues before importing tkinter
+os.environ['QT_X11_NO_MITSHM'] = '1'
+os.environ['_X11_NO_MITSHM'] = '1'
+
+# Try to fix threading issues
+import threading
+import time
+
+# Now import tkinter with error handling
+try:
+    import tkinter as tk
+    from tkinter import filedialog, ttk, scrolledtext
+except ImportError as e:
+    print(f"Tkinter import error: {e}")
+    print("Please install tkinter: sudo apt-get install python3-tk")
+    sys.exit(1)
+
 import pandas as pd
 import re
 import json
 from pathlib import Path
-import sys
-import time
 
 
 class RedirectText:
-    def __init__(self, text_widget):
+    def __init__(self, text_widget, app_instance):
         self.text_widget = text_widget
+        self.app_instance = app_instance
         self.buffer = ""
 
     def write(self, string):
-        self.buffer += string
-        self.text_widget.configure(state="normal")
-        self.text_widget.insert(tk.END, string)
-        self.text_widget.see(tk.END)
-        self.text_widget.configure(state="disabled")
+        if self.app_instance and hasattr(self.app_instance, 'safe_print'):
+            # Use thread-safe method if available
+            self.app_instance.safe_print(string.rstrip())
+        else:
+            # Fallback to direct write (main thread only)
+            try:
+                self.buffer += string
+                self.text_widget.configure(state="normal")
+                self.text_widget.insert(tk.END, string)
+                self.text_widget.see(tk.END)
+                self.text_widget.configure(state="disabled")
+            except tk.TclError:
+                # Widget might be destroyed
+                pass
 
     def flush(self):
         pass
@@ -29,9 +53,22 @@ class RedirectText:
 class DistrictUpdaterApp:
     def __init__(self, root):
         self.root = root
-        self.root.title("Istanbul District Updater")
-        self.root.geometry("700x500")
-        self.root.minsize(600, 400)
+        
+        # Configure root window with thread safety
+        try:
+            self.root.title("Istanbul District Updater")
+            self.root.geometry("700x500")
+            self.root.minsize(600, 400)
+            
+            # Add protocol to handle window closing properly
+            self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
+            
+            # Initialize threading lock
+            self.thread_lock = threading.Lock()
+            
+        except Exception as e:
+            print(f"Error configuring window: {e}")
+            raise
 
         self.input_file = ""
         self.output_folder = ""
@@ -87,7 +124,7 @@ class DistrictUpdaterApp:
         self.log_text.pack(fill=tk.BOTH, expand=True)
 
         # Redirect stdout to the log widget
-        self.stdout_redirect = RedirectText(self.log_text)
+        self.stdout_redirect = RedirectText(self.log_text, self)
         self.old_stdout = sys.stdout
         sys.stdout = self.stdout_redirect
 
@@ -328,6 +365,11 @@ class DistrictUpdaterApp:
             self.root.after(0, lambda: self.process_button.config(state="normal"))
 
     def process_file(self):
+        # Validate inputs
+        if not self.input_file or not self.output_folder:
+            self.safe_print("Please select both input file and output folder.")
+            return
+            
         # Disable the button while processing
         self.process_button.config(state="disabled")
 
@@ -338,6 +380,31 @@ class DistrictUpdaterApp:
 
         # Start the processing in a separate thread
         threading.Thread(target=self.update_districts_thread, daemon=True).start()
+    
+    def safe_print(self, message):
+        """Thread-safe print method"""
+        def update_log():
+            self.log_text.configure(state="normal")
+            self.log_text.insert(tk.END, message + "\n")
+            self.log_text.see(tk.END)
+            self.log_text.configure(state="disabled")
+        
+        if threading.current_thread() is threading.main_thread():
+            update_log()
+        else:
+            self.root.after(0, update_log)
+    
+    def on_closing(self):
+        """Handle window closing properly"""
+        try:
+            # Restore stdout
+            if hasattr(self, 'old_stdout'):
+                sys.stdout = self.old_stdout
+        except:
+            pass
+        finally:
+            self.root.quit()
+            self.root.destroy()
 
 
 if __name__ == "__main__":

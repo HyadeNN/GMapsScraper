@@ -9,7 +9,6 @@ import sys
 sys.path.append(str(Path(__file__).parent))
 
 from gmaps_scraper.utils.logger import logger
-from gmaps_scraper.utils.helpers import create_data_directory
 
 
 def flatten_json(nested_json, prefix=''):
@@ -44,7 +43,7 @@ def main():
     script_dir = Path(__file__).parent
 
     # Get the data directory where JSON files are stored
-    data_dir = script_dir / 'data'
+    data_dir = script_dir / 'gmaps_scraper' / 'data'
 
     if not data_dir.exists():
         logger.error(f"Data directory {data_dir} does not exist!")
@@ -105,8 +104,9 @@ def main():
         if key not in df.columns:
             df[key] = None
 
-    # Create output directory if it doesn't exist
-    output_dir = create_data_directory('excel_exports')
+    # Create output directory in the same data folder
+    output_dir = data_dir / 'excel_exports'
+    output_dir.mkdir(exist_ok=True)
 
     # Generate output filename with timestamp
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")

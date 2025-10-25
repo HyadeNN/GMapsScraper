@@ -177,9 +177,9 @@ const CityItem = memo(({
       {/* Districts */}
       <Collapse in={isExpanded} timeout="auto" unmountOnExit>
         {cityData.districts && Object.entries(cityData.districts).map(([districtName, districtData]) => {
-          const districtCheckboxState = checkboxState === 'checked' ? 'checked' : 
-            (citySelection?.districts?.[districtName] ? 'checked' : 'unchecked');
-          const districtSearchMethod = citySelection?.districts?.[districtName]?.search_method || searchMethod;
+          // District checkbox state is INDEPENDENT of city state
+          const districtCheckboxState = citySelection?.districts?.[districtName] ? 'checked' : 'unchecked';
+          const districtSearchMethod = citySelection?.districts?.[districtName]?.search_method || 'standard';
 
           return (
             <DistrictItem
@@ -262,13 +262,15 @@ const LocationTree = memo(({ locations, selection, onSelectionChange, disabled =
       return citySelection.districts?.[districtName] ? 'checked' : 'unchecked';
     }
     
-    // For city: check if all districts are selected
-    const districtCount = locations?.cities?.[cityName]?.district_count || 0;
-    const selectedDistrictCount = Object.keys(citySelection.districts || {}).length;
+    // For city: ONLY check city's own selection, ignore districts
+    const hasCitySelection = !!citySelection.search_method;
     
-    if (selectedDistrictCount === 0) return 'unchecked';
-    if (selectedDistrictCount === districtCount) return 'checked';
-    return 'indeterminate';
+    // City checkbox state depends ONLY on city-level selection
+    if (hasCitySelection) {
+      return 'checked';
+    } else {
+      return 'unchecked';
+    }
   }, [selection, locations]);
 
   // Memoized handlers
@@ -277,16 +279,28 @@ const LocationTree = memo(({ locations, selection, onSelectionChange, disabled =
       const newSelection = { ...selection };
       
       if (checked) {
-        // Select city (without necessarily selecting all districts)
+        // Select city at city level
         if (!newSelection.cities[cityName]) {
           newSelection.cities[cityName] = {
             search_method: 'standard',
             districts: {}
           };
+        } else {
+          // If city already exists (with districts), just add city-level selection
+          newSelection.cities[cityName].search_method = 'standard';
         }
       } else {
-        // Deselect the city and all its districts
-        delete newSelection.cities[cityName];
+        // Deselect city but keep districts if any
+        if (newSelection.cities[cityName]) {
+          const hasDistricts = Object.keys(newSelection.cities[cityName].districts || {}).length > 0;
+          if (hasDistricts) {
+            // Keep districts, remove city-level search
+            delete newSelection.cities[cityName].search_method;
+          } else {
+            // No districts, remove city entirely
+            delete newSelection.cities[cityName];
+          }
+        }
       }
       
       onSelectionChange(newSelection);
@@ -301,12 +315,11 @@ const LocationTree = memo(({ locations, selection, onSelectionChange, disabled =
         // Ensure city exists in selection
         if (!newSelection.cities[cityName]) {
           newSelection.cities[cityName] = {
-            search_method: 'standard',
             districts: {}
           };
         }
         
-        // Add district
+        // Add district (don't add city-level search automatically)
         newSelection.cities[cityName].districts[districtName] = {
           search_method: 'standard'
         };
@@ -315,8 +328,11 @@ const LocationTree = memo(({ locations, selection, onSelectionChange, disabled =
         if (newSelection.cities[cityName]?.districts) {
           delete newSelection.cities[cityName].districts[districtName];
           
-          // If no districts left, remove city
-          if (Object.keys(newSelection.cities[cityName].districts).length === 0) {
+          // If no districts left and no city-level search, remove city entirely
+          const hasDistricts = Object.keys(newSelection.cities[cityName].districts).length > 0;
+          const hasCitySearch = !!newSelection.cities[cityName].search_method;
+          
+          if (!hasDistricts && !hasCitySearch) {
             delete newSelection.cities[cityName];
           }
         }
@@ -418,9 +434,16 @@ const LocationTree = memo(({ locations, selection, onSelectionChange, disabled =
           break;
           
         case 'deselect_all':
-          // Deselect all districts in the city
+          // Deselect all districts in the city, but keep city if it has city-level selection
           if (selectedNode && newSelection.cities[selectedNode]) {
-            delete newSelection.cities[selectedNode];
+            const hasCitySearch = !!newSelection.cities[selectedNode].search_method;
+            if (hasCitySearch) {
+              // Keep city search, clear only districts
+              newSelection.cities[selectedNode].districts = {};
+            } else {
+              // No city search, remove entirely
+              delete newSelection.cities[selectedNode];
+            }
           }
           break;
           
@@ -449,8 +472,12 @@ const LocationTree = memo(({ locations, selection, onSelectionChange, disabled =
     let districts = 0;
     
     if (selection?.cities) {
-      cities = Object.keys(selection.cities).length;
       Object.values(selection.cities).forEach(city => {
+        // Count city only if it has city-level search
+        if (city.search_method) {
+          cities++;
+        }
+        // Count districts
         districts += Object.keys(city.districts || {}).length;
       });
     }
